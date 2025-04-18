@@ -4,6 +4,7 @@ import { Task, TaskStatus } from '../../types/Task';
 import { Clock, CheckCircle, XCircle, AlertTriangle, ChevronRight } from 'lucide-react';
 import { format, formatDistanceToNow, isAfter, parseISO } from 'date-fns';
 import { motion } from 'framer-motion';
+import { useTaskContext } from '../../context/TaskContext';
 
 interface TaskCardProps {
   task: Task;
@@ -11,6 +12,17 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   const { id, title, description, deadline, status } = task;
+  const { updateTask } = useTaskContext();
+
+  const statusOptions = [
+    { value: TaskStatus.ACTIVE, label: 'Active' },
+    { value: TaskStatus.COMPLETED, label: 'Complete' },
+    { value: TaskStatus.FAILED, label: 'Fail' },
+  ];
+
+  const handleStatusUpdate = (newStatus: TaskStatus) => {
+    updateTask(id, { status: newStatus });
+  };
 
   const deadlineDate = parseISO(deadline);
   const isOverdue = status === TaskStatus.ACTIVE && isAfter(new Date(), deadlineDate);
@@ -37,7 +49,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -48,11 +60,26 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
         <h3 className="font-semibold text-lg">{title}</h3>
         <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-800/50 text-xs">
           {statusIcon}
-          <span>{statusText}</span>
+          {statusText}
         </div>
       </div>
 
       <p className="text-slate-400 text-sm mb-3 line-clamp-2">{description}</p>
+
+      <div className="flex flex-wrap gap-2 mb-3">
+        {statusOptions.map((option) => (
+          <button
+            key={option.value}
+            className={`px-3 py-1.5 text-sm rounded ${status === option.value
+                ? 'bg-slate-600 text-white'
+                : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+              }`}
+            onClick={() => handleStatusUpdate(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
 
       <div className="flex justify-between items-center">
         <div>
