@@ -49,6 +49,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const data = await response.json();
           setUser(data);
         } else {
+          console.error('Failed to fetch user data', response.status);
           setUser(null);
         }
       } catch (error) {
@@ -126,22 +127,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
-  };
-
-  const fetchTasks = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      console.log('Fetching tasks with token:', token);
-      const response = await axios.get('http://localhost:3001/api/tasks', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log('Tasks fetched successfully:', response.data);
-      // Handle the response data
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-    }
   };
 
   return (

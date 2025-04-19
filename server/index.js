@@ -20,7 +20,9 @@ app.get('/api/test', (req, res) => {
 // Task endpoints
 app.get('/api/tasks', async (req, res) => {
   try {
-    const token = req.cookies.token;
+    // const token = req.cookies.token;
+    const token = req.headers.authorization?.split(' ')[1];
+    console.log('Token', token);
 
     if (!token) {
       return res.status(401).json({ message: 'Unauthorized' });
@@ -44,8 +46,8 @@ app.get('/api/tasks', async (req, res) => {
 
 app.post('/api/tasks', async (req, res) => {
   try {
-    const token = req.cookies.token;
-
+    const token = req.headers.authorization?.split(' ')[1];
+    console.log('Token', token);
     if (!token) {
       return res.status(401).json({ message: 'Unauthorized' });
     }

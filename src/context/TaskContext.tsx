@@ -36,13 +36,15 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
   const { user } = useAuthContext();
 
   useEffect(() => {
-    fetchTasks();
+    if (user) {
+      fetchTasks();
+    }
   }, [user]);
 
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (token === null) {
+      if (!token) {
         console.log('No token found');
         return;
       }
@@ -60,9 +62,22 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
 
   const addTask = async (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
     try {
-      const response = await axios.post<Task>(apiUrl, { ...taskData, status: TaskStatus.ACTIVE });
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found, cannot add task');
+        return;
+      }
+
+      const response = await axios.post<Task>(apiUrl, 
+        { ...taskData, status: TaskStatus.ACTIVE },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       setTasks((prevTasks) => [...prevTasks, response.data]);
-      debugger
     } catch (error) {
       console.error('Error adding task:', error);
     }
