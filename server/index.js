@@ -69,7 +69,7 @@ app.post('/api/tasks', async (req, res) => {
       newTask.duration.hours,
       newTask.duration.minutes,
       newTask.consequence,
-      'ACTIVE',
+      newTask.status,
       new Date().toISOString()
     ], function(err) {
       if (err) {
