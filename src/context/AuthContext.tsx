@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types/User';
+import axios from 'axios';
 
 interface AuthContextProps {
   user: User | null;
@@ -25,22 +26,32 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Simulate checking for a saved session
     const checkAuth = async () => {
       try {
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
+        const token = localStorage.getItem('token');
+        console.log('Token retrieved:', token);
+        if (!token) {
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await fetch('http://localhost:3001/api/user', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data);
+        } else {
+          setUser(null);
         }
       } catch (error) {
-        console.error('Authentication check failed', error);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -50,33 +61,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     checkAuth();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
-  }, [user]);
-
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    
     try {
-      // Simulate API call with a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real app, this would be an API call to validate credentials
-      if (email === 'demo@example.com' && password === 'password') {
-        const mockUser: User = {
-          id: '1',
-          name: 'Demo User',
-          email: 'demo@example.com',
-          createdAt: new Date().toISOString(),
-        };
-        setUser(mockUser);
-      } else {
+      const response = await fetch('http://localhost:3001/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
         throw new Error('Invalid credentials');
       }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      setUser({
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        createdAt: data.createdAt,
+      });
     } catch (error) {
       console.error('Login failed', error);
       throw error;
@@ -87,19 +94,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
-    
     try {
-      // Simulate API call with a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real app, this would be an API call to create a new user
-      const mockUser: User = {
-        id: Date.now().toString(),
-        name,
-        email,
-        createdAt: new Date().toISOString(),
-      };
-      setUser(mockUser);
+      const response = await fetch('http://localhost:3001/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Registration failed');
+      }
+
+      const data = await response.json();
+      localStorage.setItem('token', data.token);
+      setUser({
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        createdAt: data.createdAt,
+      });
     } catch (error) {
       console.error('Registration failed', error);
       throw error;
@@ -109,7 +124,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = () => {
+    localStorage.removeItem('token');
     setUser(null);
+  };
+
+  const fetchTasks = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Fetching tasks with token:', token);
+      const response = await axios.get('http://localhost:3001/api/tasks', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log('Tasks fetched successfully:', response.data);
+      // Handle the response data
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
   };
 
   return (

@@ -21,6 +21,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   ];
 
   const handleStatusUpdate = (newStatus: TaskStatus) => {
+    console.log('Updating task status:', id, newStatus);
     updateTask(id, { status: newStatus });
   };
 
@@ -71,8 +72,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
           <button
             key={option.value}
             className={`px-3 py-1.5 text-sm rounded ${status === option.value
-                ? 'bg-slate-600 text-white'
-                : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+              ? 'bg-slate-600 text-white'
+              : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
               }`}
             onClick={() => handleStatusUpdate(option.value)}
           >

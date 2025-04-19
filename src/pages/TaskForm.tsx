@@ -32,8 +32,8 @@ const TaskForm = () => {
           title: task.title,
           description: task.description,
           deadline: format(new Date(task.deadline), "yyyy-MM-dd'T'HH:mm"),
-          durationHours: task.duration.hours,
-          durationMinutes: task.duration.minutes,
+          durationHours: task.duration?.hours || 1,
+          durationMinutes: task.duration?.minutes || 0,
           consequence: task.consequence || '',
         });
       } else {
@@ -44,7 +44,7 @@ const TaskForm = () => {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
     }
@@ -79,15 +79,15 @@ const TaskForm = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'durationHours' || name === 'durationMinutes' 
-        ? parseInt(value, 10) || 0 
+      [name]: name === 'durationHours' || name === 'durationMinutes'
+        ? parseInt(value, 10) || 0
         : value,
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     const taskData = {
@@ -249,8 +249,8 @@ const TaskForm = () => {
                 ))}
               </select>
               <p className="text-xs text-slate-500 mt-1">
-                {formData.consequence 
-                  ? "Specific consequence if you fail" 
+                {formData.consequence
+                  ? "Specific consequence if you fail"
                   : "System will choose a random consequence if you fail"}
               </p>
             </div>

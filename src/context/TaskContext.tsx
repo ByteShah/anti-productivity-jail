@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Task, TaskStatus } from '../types/Task';
+import axios from 'axios';
+import { useAuthContext } from './AuthContext';
 
 interface TaskContextProps {
   tasks: Task[];
@@ -29,39 +31,74 @@ interface TaskProviderProps {
 }
 
 export const TaskProvider = ({ children }: TaskProviderProps) => {
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    return savedTasks ? JSON.parse(savedTasks) : [];
-  });
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const apiUrl = 'http://localhost:3001/api/tasks';
+  const { user } = useAuthContext();
 
   useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
+    fetchTasks();
+  }, [user]);
 
-  const addTask = (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
-    const newTask: Task = {
-      id: Date.now().toString(),
-      status: TaskStatus.ACTIVE,
-      createdAt: new Date().toISOString(),
-      ...taskData,
-    };
-    setTasks((prevTasks) => [...prevTasks, newTask]);
+  const fetchTasks = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token === null) {
+        console.log('No token found');
+        return;
+      }
+      const response = await axios.get<Task[]>(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log('Fetched tasks:', response.data);
+      setTasks(response.data);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+    }
   };
 
-  const updateTask = (id: string, taskData: Partial<Task>) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === id ? { ...task, ...taskData } : task
-      )
-    );
+  const addTask = async (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => {
+    try {
+      const response = await axios.post<Task>(apiUrl, { ...taskData, status: TaskStatus.ACTIVE });
+      setTasks((prevTasks) => [...prevTasks, response.data]);
+      debugger
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
   };
 
-  const deleteTask = (id: string) => {
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+  const updateTask = async (id: string, taskData: Partial<Task>) => {
+    try {
+      const task = tasks.find((task) => task.id === id);
+      if (!task) {
+        console.error('Task not found');
+        return;
+      }
+      const response = await axios.put<Task>(`${apiUrl}/${id}`, { ...task, ...taskData });
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === id ? response.data : task
+        )
+      );
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
+  const deleteTask = async (id: string) => {
+    try {
+      await axios.delete(`${apiUrl}/${id}`);
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
   };
 
   const getTask = (id: string) => {
-    return tasks.find((task) => task.id === id);
+    const task = tasks.find((task) => task.id === id);
+    console.log('Getting task:', id, task);
+    return task;
   };
 
   const failTask = (id: string) => {
