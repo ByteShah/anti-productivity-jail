@@ -33,7 +33,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem('token');
-        console.log('Token retrieved:', token);
         if (!token) {
           setUser(null);
           setIsLoading(false);

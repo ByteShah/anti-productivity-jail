@@ -53,7 +53,6 @@ export const TaskProvider = ({ children }: TaskProviderProps) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log('Fetched tasks:', response.data);
       setTasks(response.data);
     } catch (error) {
       console.error('Error fetching tasks:', error);
